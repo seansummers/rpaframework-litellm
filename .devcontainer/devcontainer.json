@@ -1,0 +1,30 @@
+{
+    "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+    "features": {
+        "ghcr.io/akhildevelops/devcontainer-features/apt:0": {
+            "PACKAGES": [
+                "age",
+                "git-lfs"
+            ]
+        },
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    "postCreateCommand": {
+        "pipx": "pipx install poetry"
+    },
+    "postStartCommand": {
+        "update-deps": "poetry config virtualenvs.in-project true && poetry update --sync && poetry install"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "files.eol": "\n"
+            }
+        }
+    },
+    "mounts": [
+        "source=${env:HOME}${env:USERPROFILE}/.ssh,target=/home/vscode/.ssh,type=bind"
+    ],
+    "containerUser": "vscode"
+}
