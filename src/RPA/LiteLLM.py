@@ -9,7 +9,7 @@ class LiteLLM:
     """Library to support `LiteLLM <https://litellm.ai>`_ unified API for LLM services.
 
     Library is **not** included in the `rpaframework` package, so in order to use it
-    you have to add `rpaframework-openai` with the desired version in your
+    you have to add `rpaframework-litellm` with the desired version in your
     *conda.yaml* file.
 
     **Robot Framework example usage**
@@ -22,12 +22,15 @@ class LiteLLM:
 
         *** Tasks ***
         Create a text completion
-            ${secrets}   Get Secret   secret_name=LiteLLM
-            Authorize To LiteLLM   api_key=${secrets}[key]
-            ${completion}    Completion Create
-            ...     Write a tagline for an ice cream shop
-            ...     temperature=0.6
-            Log   ${completion}
+        ${secrets}   Get Secret   secret_name=LiteLLM
+        Authorize To LiteLLM
+        ...    api_key=${secrets}[api_key]
+        ...    api_base=${secrets}[api_base]
+        ${completion}    Completion Create
+        ...    openai/gpt-4o-mini
+        ...    Write a tagline for an ice cream shop
+        ...    temperature=0.6
+        Log   ${completion}
 
     **Python example usage**
 
@@ -38,10 +41,11 @@ class LiteLLM:
 
         secrets = Vault().get_secret("LiteLLM")
         baselib = LiteLLM()
-        baselib.authorize_to_litellm(secrets["key"])
+        baselib.authorize_to_litellm(secrets["api_key"], secrets["api_base"])
 
         result = baselib.completion_create(
-            Create a tagline for icecream shop',
+            'openai/gpt-4o-mini',
+            'Create a tagline for icecream shop',
             temperature=0.6,
         )
         print(result)
@@ -144,18 +148,18 @@ class LiteLLM:
 
         .. code-block:: robotframework
 
-            ${response}  Completion Create
-            ...     text-davinci-003
-            ...     Write a tagline for an icecream shop.
-            ...     temperature=0.6
-            Log     ${response}
+            ${completion}    Completion Create
+            ...    openai/gpt-4o-mini
+            ...    Write a tagline for an ice cream shop
+            ...    temperature=0.6
+            Log   ${completion}
 
         Python example:
 
         .. code-block:: python
 
             result = baselib.completion_create(
-                'text-davinci-003',
+                'openai/gpt-4o-mini',
                 'Create a tagline for icecream shop',
                 temperature=0.6,
             )
@@ -233,34 +237,36 @@ class LiteLLM:
 
             # Get response without conversation history.
             ${response}   @{llm_conversation}=     Chat Completion Create
-            ...    text-davinci-003
+            ...    openai/gpt-4o-mini
             ...    user_content=What is the biggest mammal?
+            VAR    @{llm_conversation}    @{llm_conversation}    scope=SUITE
             Log    ${response}
+            Log    ${llm_conversation}
 
             # Continue the conversation by using the "conversation" argument.
-            ${response}   @{llm_conversation}=     Chat Completion Create
-            ...    text-davinci-003
-            ...    conversation=${llm_conversation}
+            ${response}    @{llm_conversation}=    Chat Completion Create
+            ...    openai/gpt-4o-mini
+            ...    conversation=@{llm_conversation}
             ...    user_content=How old can it live?
             Log    ${response}
-
+            Log    ${llm_conversation}
         """
-        conversation = conversation or []
         parameters = locals()
         parameters.update(parameters.pop("kwargs"))
+        messages = parameters.pop("conversation") or []
         if system_content := parameters.pop("system_content", None):
-            parameters["conversation"].append(
+            messages.append(
                 {"role": "system", "content": system_content},
             )
-        parameters["conversation"].append(
+        messages.append(
             {"role": "user", "content": parameters.pop("user_content")},
         )
-        response = litellm.completion(**parameters)
+        response = litellm.completion(messages=messages, **parameters)
         self.logger.info(response)
         text = response["choices"][0]["message"]["content"]
-        parameters["conversation"].append(
+        messages.append(
             {"role": "assistant", "content": text},
         )
-        return_list = [text, parameters["conversation"]]
+        return_list = [text, *messages]
         self.logger.info(return_list)
         return return_list

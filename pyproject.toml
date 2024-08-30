@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rpaframework-litellm"
-version = "0.1.0"
+version = "0.1.2"
 description = "LiteLLM library for RPA Framework"
 authors = ["Sean Summers <seansummers@gmail.com>"]
 license = "Apache-2.0"

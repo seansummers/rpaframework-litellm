@@ -6,7 +6,7 @@ from unittest.mock import patch
 def test_completion_create(mock):
     mock.return_value = {"choices": [{"text": "Hello World"}]}
     lib = LiteLLM()
-    response = lib.completion_create("text-davinci-003", "Foobar")
+    response = lib.completion_create("openai/gpt-4o-mini", "Foobar")
     assert response == "Hello World"
 
 
@@ -16,7 +16,7 @@ def test_chat_completion_create(mock):
         "choices": [{"message": {"content": "Hello World", "role": "assistant"}}]
     }
     lib = LiteLLM()
-    response = lib.chat_completion_create("text-davinci-003", user_content="Foobar")
+    response = lib.chat_completion_create("openai/gpt-4o-mini", user_content="Foobar")
     assert response == [
         "Hello World",
         [
